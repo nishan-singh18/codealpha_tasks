@@ -1,0 +1,2543 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LingoPulse - Standalone Single File Web App</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleUp {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-scale-up { animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    .flipped { transform: rotateY(180deg); }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    .nav-btn.active { background-color: #0284c7; color: #ffffff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); }
+    .mobile-nav-btn.active { color: #38bdf8; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-0.5 shadow-lg shadow-cyan-500/20">
+            <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+              <i class="fa-solid fa-bolt text-cyan-400 text-lg"></i>
+            </div>
+          </div>
+          <div>
+            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-cyan-200 bg-clip-text text-transparent">
+              LingoPulse
+            </span>
+            <span class="hidden sm:inline-block ml-2 text-[10px] font-semibold tracking-wider text-cyan-400 bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full uppercase">
+              PRO AI
+            </span>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="hidden md:flex items-center gap-1.5 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-800/80">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="switchTab('flashcards')" id="nav-flashcards" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Flashcards</span>
+          </button>
+          <button onclick="switchTab('quizzes')" id="nav-quizzes" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">
+            <i class="fa-solid fa-circle-question"></i>
+            <span>Quizzes</span>
+          </button>
+          <button onclick="switchTab('grammar')" id="nav-grammar" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Grammar</span>
+          </button>
+          <button onclick="switchTab('chat')" id="nav-chat" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">
+            <i class="fa-solid fa-comments"></i>
+            <span>AI Tutor</span>
+          </button>
+        </nav>
+
+        <!-- Right Controls -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Active Study Timer Pill -->
+          <button onclick="openTimerModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:bg-slate-800 transition-all text-xs">
+            <span class="relative flex h-2 w-2">
+              <span id="timer-ping-dot" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span id="timer-dot" class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            </span>
+            <i class="fa-solid fa-clock text-slate-400"></i>
+            <span class="font-mono font-bold text-cyan-300"><span id="header-timer-sec">00</span>s</span>
+          </button>
+
+          <!-- Language Selector -->
+          <div class="relative">
+            <button onclick="toggleLangDropdown()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:bg-slate-800 transition-all text-xs font-semibold">
+              <span id="current-lang-flag">🇪🇸</span>
+              <span id="current-lang-name" class="hidden sm:inline">Spanish</span>
+              <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+            </button>
+            <div id="lang-dropdown" class="hidden absolute right-0 mt-2 w-44 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl py-2 z-50 animate-scale-up"></div>
+          </div>
+
+          <!-- User Profile Button -->
+          <button onclick="openProfileModal()" class="flex items-center gap-2 p-1.5 pr-3 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:bg-slate-800 transition-all text-xs">
+            <span id="user-avatar-badge" class="w-7 h-7 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-sm">🚀</span>
+            <span id="header-user-name" class="hidden sm:inline font-bold text-slate-200">Alex</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
+    
+    <!-- VIEW 1: DASHBOARD -->
+    <div id="view-dashboard" class="space-y-6">
+      
+      <!-- Welcome Banner -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border border-indigo-500/20 p-6 sm:p-8">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-2">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
+              <i class="fa-solid fa-fire text-amber-400"></i>
+              <span id="banner-streak-text">3-Day Learning Streak Active!</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Welcome back, <span id="dash-user-name" class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-300">Alex</span>!
+            </h1>
+            <p class="text-sm text-slate-400 max-w-xl">
+              You are studying <strong id="dash-target-lang" class="text-cyan-300">Spanish</strong> today. Keep the momentum going to hit your daily study goal!
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button onclick="switchTab('flashcards')" class="px-5 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2">
+              <i class="fa-solid fa-play"></i>
+              <span>Start Practice</span>
+            </button>
+            <button onclick="switchTab('chat')" class="px-5 py-3 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700/80 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-robot text-cyan-400"></i>
+              <span>Ask AI Tutor</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <div class="bg-slate-900/70 border border-slate-800/80 p-5 rounded-3xl space-y-2">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Daily Goal</span>
+            <i class="fa-solid fa-bullseye text-cyan-400"></i>
+          </div>
+          <div class="text-2xl font-black text-white">
+            <span id="dash-spent-mins">0</span> / <span id="dash-goal-mins">10</span> <span class="text-xs text-slate-400 font-normal">mins</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div id="dash-goal-bar" class="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800/80 p-5 rounded-3xl space-y-2">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Total XP</span>
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+          </div>
+          <div class="text-2xl font-black text-amber-300" id="dash-xp-count">
+            240
+          </div>
+          <p class="text-[11px] text-slate-500">+20 XP earned today</p>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800/80 p-5 rounded-3xl space-y-2">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Mastered Words</span>
+            <i class="fa-solid fa-brain text-emerald-400"></i>
+          </div>
+          <div class="text-2xl font-black text-emerald-300" id="dash-mastered-count">
+            18
+          </div>
+          <p class="text-[11px] text-slate-500">Vocabulary cards</p>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800/80 p-5 rounded-3xl space-y-2">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Streak</span>
+            <i class="fa-solid fa-fire text-rose-400"></i>
+          </div>
+          <div class="text-2xl font-black text-rose-300" id="dash-streak-count">
+            3 Days
+          </div>
+          <p class="text-[11px] text-slate-500">Consistency bonus active</p>
+        </div>
+
+      </div>
+
+      <!-- Quick Modules Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Flashcard Module Preview -->
+        <div onclick="switchTab('flashcards')" class="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800/80 hover:border-cyan-500/40 p-6 rounded-3xl transition-all space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-layer-group text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">Smart Flashcards</h3>
+            <p class="text-xs text-slate-400 mt-1">Spaced repetition deck with audio pronunciation & phonetic hints.</p>
+          </div>
+          <div class="inline-flex items-center gap-2 text-xs font-bold text-cyan-400">
+            <span>Practice Deck</span>
+            <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Quiz Module Preview -->
+        <div onclick="switchTab('quizzes')" class="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800/80 hover:border-indigo-500/40 p-6 rounded-3xl transition-all space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-circle-question text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">Interactive Quizzes</h3>
+            <p class="text-xs text-slate-400 mt-1">Multiple choice challenges to test your recall and grammar intuition.</p>
+          </div>
+          <div class="inline-flex items-center gap-2 text-xs font-bold text-indigo-400">
+            <span>Take Quiz</span>
+            <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- AI Tutor Module Preview -->
+        <div onclick="switchTab('chat')" class="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800/80 hover:border-purple-500/40 p-6 rounded-3xl transition-all space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-robot text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white group-hover:text-purple-300 transition-colors">AI Conversation Partner</h3>
+            <p class="text-xs text-slate-400 mt-1">Simulate real scenarios: order food, ask directions, or ask grammar rules.</p>
+          </div>
+          <div class="inline-flex items-center gap-2 text-xs font-bold text-purple-400">
+            <span>Chat Now</span>
+            <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Featured Word & Audio Example Widget -->
+      <div id="dash-featured-container"></div>
+
+      <!-- Achievements & Badges -->
+      <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-award text-amber-400"></i>
+            <span>Achievements & Badges</span>
+          </h2>
+          <span class="text-xs text-slate-400 font-medium">4 / 6 Unlocked</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3" id="badges-container"></div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 2: FLASHCARDS -->
+    <div id="view-flashcards" class="hidden space-y-6">
+      
+      <!-- Top Filters & Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-cyan-400"></i>
+            <span>Vocabulary Flashcards</span>
+          </h2>
+          <p class="text-xs text-slate-400">Click card to flip • Listen to native audio pronunciation</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openAIFlashcardModal()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+            <span>✨ AI Generate Cards</span>
+          </button>
+          <button onclick="openAddFlashcardModal()" class="px-3 py-2 rounded-2xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-all border border-slate-700/60 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Manual Add</span>
+          </button>
+          <!-- Topic Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin" id="flashcard-topics-bar"></div>
+        </div>
+      </div>
+
+      <!-- Flashcard Render Area -->
+      <div id="flashcard-render-area"></div>
+
+    </div>
+
+    <!-- VIEW 3: QUIZZES -->
+    <div id="view-quizzes" class="hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <i class="fa-solid fa-circle-question text-indigo-400"></i>
+            <span>Interactive Quiz</span>
+          </h2>
+          <p class="text-xs text-slate-400">Test your language knowledge and earn XP!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openAIQuizModal()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+            <span>✨ AI Generate Quiz</span>
+          </button>
+          <button onclick="openAddQuizModal()" class="px-3 py-2 rounded-2xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-all border border-slate-700/60 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Manual Add</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="quiz-render-area"></div>
+    </div>
+
+    <!-- VIEW 4: GRAMMAR -->
+    <div id="view-grammar" class="hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <i class="fa-solid fa-book-open text-purple-400"></i>
+            <span>Grammar & Rules Handbook</span>
+          </h2>
+          <p class="text-xs text-slate-400">Clear breakdowns of verb conjugations, articles, and sentence structures.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openAIGrammarModal()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+            <span>✨ AI Generate Grammar</span>
+          </button>
+          <button onclick="openAddGrammarModal()" class="px-3 py-2 rounded-2xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-all border border-slate-700/60 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Manual Add</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="grammar-render-area" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </div>
+
+    <!-- VIEW 5: AI TUTOR CHAT -->
+    <div id="view-chat" class="hidden space-y-4">
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <i class="fa-solid fa-robot text-cyan-400"></i>
+            <span>AI Language Tutor</span>
+          </h2>
+          <p class="text-xs text-slate-400">Interactive practice partner with smart prompt shortcuts</p>
+        </div>
+
+        <button onclick="clearChat()" class="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold border border-slate-700/60 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-trash-can text-[11px]"></i>
+          <span>Clear Chat</span>
+        </button>
+      </div>
+
+      <!-- Quick Prompt Suggestions -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        <button onclick="sendQuickPrompt('How do I order coffee in Spanish?')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">
+          ☕ Order coffee in Spanish
+        </button>
+        <button onclick="sendQuickPrompt('Explain Ser vs Estar with 3 simple examples')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">
+          📖 Ser vs Estar rules
+        </button>
+        <button onclick="sendQuickPrompt('Give me 3 common greetings and phonetics')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">
+          👋 Common greetings
+        </button>
+      </div>
+
+      <!-- Chat Container -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-3xl p-4 sm:p-6 flex flex-col h-[520px]">
+        <div id="chat-messages-box" class="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin"></div>
+
+        <form onsubmit="handleChatSubmit(event)" class="mt-4 flex items-center gap-2">
+          <input id="chat-input" type="text" placeholder="Type a sentence or question in Spanish or English..." class="flex-1 bg-slate-950 border border-slate-800 focus:border-cyan-500 text-white rounded-2xl px-4 py-3 text-xs focus:outline-none transition-all placeholder:text-slate-600" />
+          <button type="submit" class="px-5 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+            <span>Send</span>
+            <i class="fa-solid fa-paper-plane text-[11px]"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 px-2 py-2">
+    <div class="flex items-center justify-around">
+      <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn active flex flex-col items-center gap-1 p-2 text-slate-400 text-[10px] font-bold">
+        <i class="fa-solid fa-chart-pie text-base"></i>
+        <span>Dash</span>
+      </button>
+      <button onclick="switchTab('flashcards')" id="mobile-nav-flashcards" class="mobile-nav-btn flex flex-col items-center gap-1 p-2 text-slate-400 text-[10px] font-bold">
+        <i class="fa-solid fa-layer-group text-base"></i>
+        <span>Cards</span>
+      </button>
+      <button onclick="switchTab('quizzes')" id="mobile-nav-quizzes" class="mobile-nav-btn flex flex-col items-center gap-1 p-2 text-slate-400 text-[10px] font-bold">
+        <i class="fa-solid fa-circle-question text-base"></i>
+        <span>Quiz</span>
+      </button>
+      <button onclick="switchTab('grammar')" id="mobile-nav-grammar" class="mobile-nav-btn flex flex-col items-center gap-1 p-2 text-slate-400 text-[10px] font-bold">
+        <i class="fa-solid fa-book-open text-base"></i>
+        <span>Grammar</span>
+      </button>
+      <button onclick="switchTab('chat')" id="mobile-nav-chat" class="mobile-nav-btn flex flex-col items-center gap-1 p-2 text-slate-400 text-[10px] font-bold">
+        <i class="fa-solid fa-robot text-base"></i>
+        <span>AI Tutor</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PROFILE SETTINGS MODAL -->
+  <div id="profile-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-gear text-cyan-400"></i>
+          <span>Profile & Goals Settings</span>
+        </h3>
+        <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Learner Name</label>
+          <input type="text" id="modal-user-name-input" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Avatar Emoji</label>
+          <div class="flex items-center gap-2" id="avatar-picker-box">
+            <button onclick="selectAvatar('🚀')" class="avatar-opt text-xl p-2 rounded-xl bg-slate-800 hover:bg-slate-700">🚀</button>
+            <button onclick="selectAvatar('⚡')" class="avatar-opt text-xl p-2 rounded-xl bg-slate-800 hover:bg-slate-700">⚡</button>
+            <button onclick="selectAvatar('🦉')" class="avatar-opt text-xl p-2 rounded-xl bg-slate-800 hover:bg-slate-700">🦉</button>
+            <button onclick="selectAvatar('🔥')" class="avatar-opt text-xl p-2 rounded-xl bg-slate-800 hover:bg-slate-700">🔥</button>
+            <button onclick="selectAvatar('🌟')" class="avatar-opt text-xl p-2 rounded-xl bg-slate-800 hover:bg-slate-700">🌟</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-xs font-semibold text-slate-400">Daily Goal (Minutes)</label>
+            <span id="modal-goal-val" class="text-xs font-bold text-cyan-400">10 mins</span>
+          </div>
+          <input type="range" id="modal-goal-range" min="5" max="60" step="5" value="10" oninput="updateModalGoalLabel(this.value)" class="w-full accent-cyan-500 cursor-pointer" />
+        </div>
+
+        <div class="pt-4 border-t border-slate-800/80 space-y-2">
+          <div class="text-xs font-bold text-slate-300">Reset Progress & Statistics</div>
+          <p class="text-[11px] text-slate-400">Reset your Day Streak, total XP, Mastered Words, and Today's Study Time back to zero.</p>
+          <button onclick="resetUserProgressStats()" class="w-full py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold hover:bg-rose-500/20 transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Reset Streak, XP & Mastered Words</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeProfileModal()" class="flex-1 py-3 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="saveProfileModal()" class="flex-1 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20">
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE TIMER DETAILED MODAL -->
+  <div id="timer-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 space-y-6 shadow-2xl text-center animate-scale-up">
+      <div class="flex items-center justify-between text-left">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-clock text-cyan-400"></i>
+          <span>Study Timer</span>
+        </h3>
+        <button onclick="closeTimerModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="py-4 space-y-2">
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Seconds Progress</div>
+        <div class="text-4xl font-black font-mono text-cyan-400">
+          <span id="modal-timer-seconds">00</span><span class="text-slate-600 text-lg">s</span> / 60s
+        </div>
+        <div class="text-xs text-indigo-300 font-semibold">
+          Total Logged: <span id="modal-timer-spent" class="font-bold text-white">0</span> / <span id="modal-timer-target" class="font-bold text-white">10</span> mins
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="toggleTimer()" id="modal-timer-toggle-btn" class="flex-1 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20">
+          Pause Timer
+        </button>
+        <button onclick="resetTimerAndProgress()" class="py-3 px-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold hover:bg-rose-500/20 transition-all">
+          Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD FLASHCARD MODAL -->
+  <div id="add-flashcard-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-cyan-400"></i>
+          <span>Add New Flashcard</span>
+        </h3>
+        <button onclick="closeAddFlashcardModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Quick AI Auto-fill Box -->
+      <div class="bg-cyan-950/30 border border-cyan-500/30 p-3 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-cyan-400">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Quick Auto-Fill</span>
+          <span class="text-[10px] text-cyan-300/70 font-normal">Type topic or word below</span>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="fc-ai-prompt" placeholder="e.g. Coffee shop, Flight, Doctor..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-cyan-500 focus:outline-none placeholder:text-slate-600" />
+          <button onclick="autoFillFlashcardAI()" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shrink-0">Auto-Fill</button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Language</label>
+            <select id="fc-add-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none">
+              <option value="es">Spanish 🇪🇸</option>
+              <option value="fr">French 🇫🇷</option>
+              <option value="de">German 🇩🇪</option>
+              <option value="ja">Japanese 🇯🇵</option>
+              <option value="it">Italian 🇮🇹</option>
+              <option value="zh">Mandarin 🇨🇳</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Topic</label>
+            <input type="text" id="fc-add-topic" placeholder="e.g. Greetings" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Word / Phrase (Target Language)</label>
+          <input type="text" id="fc-add-word" placeholder="e.g. Buenos días" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Phonetic Guide</label>
+            <input type="text" id="fc-add-phonetic" placeholder="e.g. BWAY-nohs DEE-ahs" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">English Translation</label>
+            <input type="text" id="fc-add-translation" placeholder="e.g. Good morning" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Example Sentence (Target Language)</label>
+          <input type="text" id="fc-add-example" placeholder="e.g. Buenos días a todos." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Example Sentence Translation</label>
+          <input type="text" id="fc-add-example-trans" placeholder="e.g. Good morning everyone." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeAddFlashcardModal()" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="saveNewFlashcard()" class="flex-1 py-2.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20">
+          Save Flashcard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEDICATED AI FLASHCARD GENERATOR MODAL -->
+  <div id="ai-flashcard-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-cyan-400"></i>
+          <span>✨ AI Flashcard Generator</span>
+        </h3>
+        <button onclick="closeAIFlashcardModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Target Language</label>
+            <select id="ai-fc-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none">
+              <option value="es">Spanish 🇪🇸</option>
+              <option value="fr">French 🇫🇷</option>
+              <option value="de">German 🇩🇪</option>
+              <option value="ja">Japanese 🇯🇵</option>
+              <option value="it">Italian 🇮🇹</option>
+              <option value="zh">Mandarin 🇨🇳</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Card Count</label>
+            <select id="ai-fc-count" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none">
+              <option value="1">1 Card</option>
+              <option value="3" selected>3 Cards</option>
+              <option value="5">5 Cards</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Topic or Custom Prompt</label>
+          <input type="text" id="ai-fc-topic-input" placeholder="e.g. Airport & Travel, Doctor, Ordering Tapas, Coding..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Quick Preset Topics</label>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setAIFcTopic('Airport & Travel')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">✈️ Airport</button>
+            <button onclick="setAIFcTopic('Food & Dining')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">🍷 Restaurant</button>
+            <button onclick="setAIFcTopic('Medical & Doctor')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">🏥 Doctor</button>
+            <button onclick="setAIFcTopic('Shopping & Prices')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">🛍️ Shopping</button>
+            <button onclick="setAIFcTopic('Slang & Idioms')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-300 transition-all">🔥 Slang</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ai-fc-status" class="hidden p-3 rounded-2xl bg-cyan-950/50 border border-cyan-500/30 text-xs text-cyan-200 flex items-center gap-2">
+        <i class="fa-solid fa-spinner fa-spin text-cyan-400"></i>
+        <span>✨ AI is generating flashcards with native phonetics & examples...</span>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeAIFlashcardModal()" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="runAIFlashcardGenerator()" class="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+          <span>Generate Cards</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD QUIZ MODAL -->
+  <div id="add-quiz-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-indigo-400"></i>
+          <span>Add New Quiz Question</span>
+        </h3>
+        <button onclick="closeAddQuizModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Quick AI Auto-fill Box -->
+      <div class="bg-indigo-950/30 border border-indigo-500/30 p-3 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-indigo-400">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Quick Auto-Fill</span>
+          <span class="text-[10px] text-indigo-300/70 font-normal">Type topic or question concept</span>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="q-ai-prompt" placeholder="e.g. Past tense, Ordering coffee, Directions..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none placeholder:text-slate-600" />
+          <button onclick="autoFillQuizAI()" class="px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs transition-all shrink-0">Auto-Fill</button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Language</label>
+          <select id="q-add-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+            <option value="es">Spanish 🇪🇸</option>
+            <option value="fr">French 🇫🇷</option>
+            <option value="de">German 🇩🇪</option>
+            <option value="ja">Japanese 🇯🇵</option>
+            <option value="it">Italian 🇮🇹</option>
+            <option value="zh">Mandarin 🇨🇳</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Question Text</label>
+          <input type="text" id="q-add-question" placeholder="e.g. How do you say 'Water' in Spanish?" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-semibold text-slate-400 mb-1">Option A</label>
+            <input type="text" id="q-add-opt-0" placeholder="Option A" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-slate-400 mb-1">Option B</label>
+            <input type="text" id="q-add-opt-1" placeholder="Option B" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-slate-400 mb-1">Option C</label>
+            <input type="text" id="q-add-opt-2" placeholder="Option C" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-slate-400 mb-1">Option D</label>
+            <input type="text" id="q-add-opt-3" placeholder="Option D" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Correct Answer</label>
+            <select id="q-add-answer" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+              <option value="0">Option A</option>
+              <option value="1">Option B</option>
+              <option value="2">Option C</option>
+              <option value="3">Option D</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Explanation</label>
+            <input type="text" id="q-add-explanation" placeholder="e.g. 'Agua' means water." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeAddQuizModal()" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="saveNewQuiz()" class="flex-1 py-2.5 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-500/20">
+          Save Quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEDICATED AI QUIZ GENERATOR MODAL -->
+  <div id="ai-quiz-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+          <span>✨ AI Quiz Generator</span>
+        </h3>
+        <button onclick="closeAIQuizModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Target Language</label>
+            <select id="ai-q-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+              <option value="es">Spanish 🇪🇸</option>
+              <option value="fr">French 🇫🇷</option>
+              <option value="de">German 🇩🇪</option>
+              <option value="ja">Japanese 🇯🇵</option>
+              <option value="it">Italian 🇮🇹</option>
+              <option value="zh">Mandarin 🇨🇳</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Difficulty</label>
+            <select id="ai-q-level" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Quiz Topic or Grammar Skill</label>
+          <input type="text" id="ai-q-topic-input" placeholder="e.g. Food & Ordering, Past Tense, Directions..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Quick Presets</label>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setAIQTopic('Vocabulary Challenge')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-indigo-500/50 hover:text-indigo-300 transition-all">📚 Vocab</button>
+            <button onclick="setAIQTopic('Verb Conjugation')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-indigo-500/50 hover:text-indigo-300 transition-all">⚡ Verbs</button>
+            <button onclick="setAIQTopic('Restaurant Phrases')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-indigo-500/50 hover:text-indigo-300 transition-all">☕ Restaurant</button>
+            <button onclick="setAIQTopic('Common Mistakes')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-indigo-500/50 hover:text-indigo-300 transition-all">🎯 Grammar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ai-q-status" class="hidden p-3 rounded-2xl bg-indigo-950/50 border border-indigo-500/30 text-xs text-indigo-200 flex items-center gap-2">
+        <i class="fa-solid fa-spinner fa-spin text-indigo-400"></i>
+        <span>✨ AI is generating quiz questions and option choices...</span>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeAIQuizModal()" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="runAIQuizGenerator()" class="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+          <span>Generate Quiz</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD GRAMMAR MODAL -->
+  <div id="add-grammar-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-book-open text-purple-400"></i>
+          <span>Add Grammar Rule</span>
+        </h3>
+        <button onclick="closeAddGrammarModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Quick AI Auto-fill Box -->
+      <div class="bg-purple-950/30 border border-purple-500/30 p-3 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-purple-400">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Quick Auto-Fill</span>
+          <span class="text-[10px] text-purple-300/70 font-normal">Type grammar topic below</span>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="g-ai-prompt" placeholder="e.g. Subjunctive mood, Articles, Past Tense..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:border-purple-500 focus:outline-none placeholder:text-slate-600" />
+          <button onclick="autoFillGrammarAI()" class="px-3 py-1.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs transition-all shrink-0">Auto-Fill</button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Language</label>
+            <select id="g-add-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none">
+              <option value="es">Spanish 🇪🇸</option>
+              <option value="fr">French 🇫🇷</option>
+              <option value="de">German 🇩🇪</option>
+              <option value="ja">Japanese 🇯🇵</option>
+              <option value="it">Italian 🇮🇹</option>
+              <option value="zh">Mandarin 🇨🇳</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Level</label>
+            <select id="g-add-level" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Topic / Lesson Title</label>
+          <input type="text" id="g-add-title" placeholder="e.g. Preterite vs Imperfect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Summary Overview</label>
+          <input type="text" id="g-add-summary" placeholder="e.g. Master completed past actions vs descriptions." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Rule Title</label>
+          <input type="text" id="g-add-rule-title" placeholder="e.g. Completed Past Actions" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Rule Explanation</label>
+          <input type="text" id="g-add-rule-details" placeholder="e.g. Use preterite for single events at a specific time." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Example Sentence</label>
+          <input type="text" id="g-add-rule-example" placeholder="e.g. Ayer fui al cine." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeAddGrammarModal()" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="saveNewGrammar()" class="flex-1 py-2.5 rounded-2xl bg-purple-500 hover:bg-purple-400 text-white text-xs font-bold transition-all shadow-lg shadow-purple-500/20">
+          Save Grammar Rule
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEDICATED AI GRAMMAR GENERATOR MODAL -->
+  <div id="ai-grammar-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+          <span>✨ AI Grammar Lesson Generator</span>
+        </h3>
+        <button onclick="closeAIGrammarModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Target Language</label>
+            <select id="ai-g-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none">
+              <option value="es">Spanish 🇪🇸</option>
+              <option value="fr">French 🇫🇷</option>
+              <option value="de">German 🇩🇪</option>
+              <option value="ja">Japanese 🇯🇵</option>
+              <option value="it">Italian 🇮🇹</option>
+              <option value="zh">Mandarin 🇨🇳</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Proficiency Level</label>
+            <select id="ai-g-level" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Grammar Concept or Topic</label>
+          <input type="text" id="ai-g-topic-input" placeholder="e.g. Subjunctive Mood, Prepositions, Articles..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-purple-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Quick Presets</label>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setAIGTopic('Verb Tenses & Conjugation')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-purple-500/50 hover:text-purple-300 transition-all">📖 Verb Tenses</button>
+            <button onclick="setAIGTopic('Articles & Genders')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-purple-500/50 hover:text-purple-300 transition-all">🏷️ Genders</button>
+            <button onclick="setAIGTopic('Direct & Indirect Pronouns')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-purple-500/50 hover:text-purple-300 transition-all">💬 Pronouns</button>
+            <button onclick="setAIGTopic('Asking Questions')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-purple-500/50 hover:text-purple-300 transition-all">❓ Questions</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ai-g-status" class="hidden p-3 rounded-2xl bg-purple-950/50 border border-purple-500/30 text-xs text-purple-200 flex items-center gap-2">
+        <i class="fa-solid fa-spinner fa-spin text-purple-400"></i>
+        <span>✨ AI is structuring rule breakdowns & audio-ready examples...</span>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeAIGrammarModal()" class="flex-1 py-2.5 rounded-2xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-all">
+          Cancel
+        </button>
+        <button onclick="runAIGrammarGenerator()" class="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+          <span>Generate Lesson</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DATA & APPLICATION STATE
+    const LANGUAGES = [
+      { id: 'es', name: 'Spanish', flag: '🇪🇸', speechCode: 'es-ES' },
+      { id: 'fr', name: 'French', flag: '🇫🇷', speechCode: 'fr-FR' },
+      { id: 'de', name: 'German', flag: '🇩🇪', speechCode: 'de-DE' },
+      { id: 'ja', name: 'Japanese', flag: '🇯🇵', speechCode: 'ja-JP' },
+      { id: 'it', name: 'Italian', flag: '🇮🇹', speechCode: 'it-IT' },
+      { id: 'zh', name: 'Mandarin', flag: '🇨🇳', speechCode: 'zh-CN' }
+    ];
+
+    const FLASHCARDS = [
+      // SPANISH
+      { id: 'es-1', lang: 'es', topic: 'Greetings', word: 'Hola', translation: 'Hello', phonetic: 'OH-lah', example: 'Hola, ¿cómo estás?', exampleTranslation: 'Hello, how are you?' },
+      { id: 'es-2', lang: 'es', topic: 'Greetings', word: 'Buenos días', translation: 'Good morning', phonetic: 'BWAY-nohs DEE-ahs', example: 'Buenos días a todos.', exampleTranslation: 'Good morning everyone.' },
+      { id: 'es-3', lang: 'es', topic: 'Greetings', word: 'Buenas noches', translation: 'Good evening / night', phonetic: 'BWAY-nahs NOH-chehs', example: 'Buenas noches, hasta mañana.', exampleTranslation: 'Good night, see you tomorrow.' },
+      { id: 'es-4', lang: 'es', topic: 'Essentials', word: 'Por favor', translation: 'Please', phonetic: 'por fah-VOR', example: 'Un café, por favor.', exampleTranslation: 'A coffee, please.' },
+      { id: 'es-5', lang: 'es', topic: 'Essentials', word: 'Gracias', translation: 'Thank you', phonetic: 'GRAH-see-ahs', example: 'Muchas gracias por tu ayuda.', exampleTranslation: 'Thank you very much for your help.' },
+      { id: 'es-6', lang: 'es', topic: 'Essentials', word: 'De nada', translation: 'You are welcome', phonetic: 'deh NAH-dah', example: 'De nada, es un placer.', exampleTranslation: 'You are welcome, it is a pleasure.' },
+      { id: 'es-7', lang: 'es', topic: 'Dining', word: 'La cuenta, por favor', translation: 'The bill, please', phonetic: 'lah KWEN-tah por fah-VOR', example: 'Mesero, la cuenta por favor.', exampleTranslation: 'Waiter, the bill please.' },
+      { id: 'es-8', lang: 'es', topic: 'Dining', word: 'Agua', translation: 'Water', phonetic: 'AH-gwah', example: 'Quisiera un vaso de agua.', exampleTranslation: 'I would like a glass of water.' },
+      { id: 'es-9', lang: 'es', topic: 'Travel', word: '¿Dónde está...?', translation: 'Where is...?', phonetic: 'DOHN-deh ehs-TAH', example: '¿Dónde está la estación de tren?', exampleTranslation: 'Where is the train station?' },
+      { id: 'es-10', lang: 'es', topic: 'Travel', word: 'El aeropuerto', translation: 'The airport', phonetic: 'ehl ah-eh-roh-PWER-toh', example: 'Vamos al aeropuerto.', exampleTranslation: 'We are going to the airport.' },
+
+      // FRENCH
+      { id: 'fr-1', lang: 'fr', topic: 'Greetings', word: 'Bonjour', translation: 'Hello / Good morning', phonetic: 'bohn-ZHOOR', example: 'Bonjour, comment allez-vous?', exampleTranslation: 'Hello, how are you?' },
+      { id: 'fr-2', lang: 'fr', topic: 'Greetings', word: 'Bonsoir', translation: 'Good evening', phonetic: 'bohn-SWAHR', example: 'Bonsoir tout le monde.', exampleTranslation: 'Good evening everyone.' },
+      { id: 'fr-3', lang: 'fr', topic: 'Essentials', word: 'S’il vous plaît', translation: 'Please', phonetic: 'seel voo PLEH', example: 'Un croissant, s’il vous plaît.', exampleTranslation: 'A croissant, please.' },
+      { id: 'fr-4', lang: 'fr', topic: 'Essentials', word: 'Merci beaucoup', translation: 'Thank you very much', phonetic: 'mehr-SEE boh-KOO', example: 'Merci beaucoup pour le cadeau.', exampleTranslation: 'Thank you very much for the gift.' },
+      { id: 'fr-5', lang: 'fr', topic: 'Dining', word: 'L’addition, s’il vous plaît', translation: 'The bill, please', phonetic: 'lah-dee-SYOHN seel voo PLEH', example: 'Garçon, l’addition s’il vous plaît.', exampleTranslation: 'Waiter, the bill please.' },
+      { id: 'fr-6', lang: 'fr', topic: 'Dining', word: 'L’eau', translation: 'Water', phonetic: 'LOH', example: 'Une bouteille d’eau, s’il vous plaît.', exampleTranslation: 'A bottle of water, please.' },
+      { id: 'fr-7', lang: 'fr', topic: 'Travel', word: 'Où est la gare?', translation: 'Where is the train station?', phonetic: 'oo eh lah GAHR', example: 'Pardon, où est la gare?', exampleTranslation: 'Excuse me, where is the station?' },
+
+      // GERMAN
+      { id: 'de-1', lang: 'de', topic: 'Greetings', word: 'Guten Tag', translation: 'Good day / Hello', phonetic: 'GOO-ten TAHK', example: 'Guten Tag, wie geht es Ihnen?', exampleTranslation: 'Good day, how are you?' },
+      { id: 'de-2', lang: 'de', topic: 'Greetings', word: 'Guten Morgen', translation: 'Good morning', phonetic: 'GOO-ten MOR-gen', example: 'Guten Morgen allerseits.', exampleTranslation: 'Good morning everyone.' },
+      { id: 'de-3', lang: 'de', topic: 'Essentials', word: 'Bitte', translation: 'Please / You’re welcome', phonetic: 'BIT-teh', example: 'Ein Kaffee, bitte.', exampleTranslation: 'A coffee, please.' },
+      { id: 'de-4', lang: 'de', topic: 'Essentials', word: 'Danke schön', translation: 'Thank you very much', phonetic: 'DAHN-keh shuen', example: 'Vielen Dank und danke schön.', exampleTranslation: 'Many thanks and thank you very much.' },
+      { id: 'de-5', lang: 'de', topic: 'Dining', word: 'Die Rechnung, bitte', translation: 'The bill, please', phonetic: 'dee RECH-noong BIT-teh', example: 'Wir möchten bezahlen. Die Rechnung, bitte.', exampleTranslation: 'We would like to pay. The bill, please.' },
+      { id: 'de-6', lang: 'de', topic: 'Travel', word: 'Wo ist der Bahnhof?', translation: 'Where is the train station?', phonetic: 'voh ist dehr BAHN-hof', example: 'Entschuldigung, wo ist der Bahnhof?', exampleTranslation: 'Excuse me, where is the station?' },
+
+      // JAPANESE
+      { id: 'ja-1', lang: 'ja', topic: 'Greetings', word: 'こんにちは (Konnichiwa)', translation: 'Hello / Good afternoon', phonetic: 'kohn-nee-chee-wah', example: 'こんにちは、お元気ですか？', exampleTranslation: 'Hello, how are you?' },
+      { id: 'ja-2', lang: 'ja', topic: 'Greetings', word: 'おはようございます (Ohayou gozaimasu)', translation: 'Good morning', phonetic: 'oh-hah-yoo goh-zah-ee-mahs', example: '皆さん、おはようございます！', exampleTranslation: 'Good morning, everyone!' },
+      { id: 'ja-3', lang: 'ja', topic: 'Essentials', word: 'ありがとうございます (Arigatou gozaimasu)', translation: 'Thank you very much', phonetic: 'ah-ree-gah-too goh-zah-ee-mahs', example: 'ご協力ありがとうございます。', exampleTranslation: 'Thank you for your cooperation.' },
+      { id: 'ja-4', lang: 'ja', topic: 'Essentials', word: 'すみません (Sumimasen)', translation: 'Excuse me / Sorry', phonetic: 'soo-mee-mah-sehn', example: 'すみません、駅はどこですか？', exampleTranslation: 'Excuse me, where is the station?' },
+      { id: 'ja-5', lang: 'ja', topic: 'Dining', word: 'お会計をお願いします (Okaikei o onegaishimasu)', translation: 'Check/Bill please', phonetic: 'oh-kah-ee-keh-ee oh oh-neh-gah-ee-shee-mahs', example: 'ごちそうさまでした。お会計をお願いします。', exampleTranslation: 'Thank you for the meal. Check please.' },
+
+      // ITALIAN
+      { id: 'it-1', lang: 'it', topic: 'Greetings', word: 'Ciao', translation: 'Hello / Goodbye', phonetic: 'CHOW', example: 'Ciao, come stai?', exampleTranslation: 'Hi, how are you?' },
+      { id: 'it-2', lang: 'it', topic: 'Greetings', word: 'Buongiorno', translation: 'Good morning', phonetic: 'bwohn-JHOR-noh', example: 'Buongiorno a tutti!', exampleTranslation: 'Good morning everyone!' },
+      { id: 'it-3', lang: 'it', topic: 'Essentials', word: 'Per favore', translation: 'Please', phonetic: 'pehr fah-VOH-reh', example: 'Un espresso, per favore.', exampleTranslation: 'An espresso, please.' },
+      { id: 'it-4', lang: 'it', topic: 'Essentials', word: 'Grazie mille', translation: 'Thank you very much', phonetic: 'GRAHT-syeh MEEL-leh', example: 'Grazie mille per l’aiuto.', exampleTranslation: 'Thanks a lot for the help.' },
+      { id: 'it-5', lang: 'it', topic: 'Dining', word: 'Il conto, per favore', translation: 'The bill, please', phonetic: 'eel KOHN-toh pehr fah-VOH-reh', example: 'Cameriere, il conto per favore.', exampleTranslation: 'Waiter, the bill please.' },
+
+      // MANDARIN
+      { id: 'zh-1', lang: 'zh', topic: 'Greetings', word: '你好 (Nǐ hǎo)', translation: 'Hello', phonetic: 'nee how', example: '你好，很高兴认识你！', exampleTranslation: 'Hello, nice to meet you!' },
+      { id: 'zh-2', lang: 'zh', topic: 'Greetings', word: '早上好 (Zǎoshang hǎo)', translation: 'Good morning', phonetic: 'dzow-shung how', example: '老师，早上好！', exampleTranslation: 'Good morning, teacher!' },
+      { id: 'zh-3', lang: 'zh', topic: 'Essentials', word: '谢谢 (Xièxie)', translation: 'Thank you', phonetic: 'shyeh-shyeh', example: '非常谢谢你的帮助。', exampleTranslation: 'Thank you very much for your help.' },
+      { id: 'zh-4', lang: 'zh', topic: 'Essentials', word: '不客气 (Bú kèqi)', translation: 'You’re welcome', phonetic: 'boo kuh-chee', example: '不客气，随时找我。', exampleTranslation: 'You’re welcome, contact me anytime.' },
+      { id: 'zh-5', lang: 'zh', topic: 'Dining', word: '买单 (Mǎi dān)', translation: 'Pay the bill', phonetic: 'my dahn', example: '服务员，买单！', exampleTranslation: 'Waiter, check please!' }
+    ];
+
+    const QUIZZES = [
+      // SPANISH
+      { id: 'q1', lang: 'es', question: 'How do you say "Thank you" in Spanish?', options: ['Por favor', 'Gracias', 'Hola', 'De nada'], answer: 1, explanation: '"Gracias" means "Thank you".' },
+      { id: 'q2', lang: 'es', question: 'Which phrase means "The bill, please" when dining?', options: ['Buenos días', 'La cuenta, por favor', '¿Dónde está la estación?', 'Mucho gusto'], answer: 1, explanation: '"La cuenta, por favor" translates to "The bill, please".' },
+      { id: 'q3', lang: 'es', question: 'Complete: "Yo ____ agua todos los días." (I drink water every day)', options: ['bebo', 'bebes', 'bebe', 'bebemos'], answer: 0, explanation: 'First person singular of "beber" is "bebo".' },
+      { id: 'q4', lang: 'es', question: 'What does "Buenos días" mean?', options: ['Good evening', 'Good morning', 'Goodbye', 'Please'], answer: 1, explanation: '"Buenos días" translates to "Good morning".' },
+
+      // FRENCH
+      { id: 'q5', lang: 'fr', question: 'What is the French translation for "Hello"?', options: ['Merci', 'Bonjour', 'Oui', 'Au revoir'], answer: 1, explanation: '"Bonjour" means "Hello" or "Good morning".' },
+      { id: 'q6', lang: 'fr', question: 'How do you politely ask for the check in a French restaurant?', options: ['S’il vous plaît', 'L’addition, s’il vous plaît', 'Bonsoir', 'De rien'], answer: 1, explanation: '"L’addition, s’il vous plaît" is used to ask for the bill.' },
+      { id: 'q7', lang: 'fr', question: 'Translate: "Merci beaucoup"', options: ['Thank you very much', 'You are welcome', 'Good evening', 'See you soon'], answer: 0, explanation: '"Merci beaucoup" means "Thank you very much".' },
+
+      // GERMAN
+      { id: 'q8', lang: 'de', question: 'What is "Good day" or "Hello" in German?', options: ['Guten Tag', 'Danke', 'Auf Wiedersehen', 'Bitte'], answer: 0, explanation: '"Guten Tag" literally means "Good day".' },
+      { id: 'q9', lang: 'de', question: 'How do you say "Please" or "You’re welcome" in German?', options: ['Danke', 'Bitte', 'Hallo', 'Tschüss'], answer: 1, explanation: '"Bitte" serves as both "Please" and "You are welcome".' },
+
+      // JAPANESE
+      { id: 'q10', lang: 'ja', question: 'How do you say "Thank you very much" in Japanese?', options: ['Konnichiwa', 'Sumimasen', 'Arigatou gozaimasu', 'Sayounara'], answer: 2, explanation: '"Arigatou gozaimasu" is formal "Thank you very much".' },
+      { id: 'q11', lang: 'ja', question: 'What does "Sumimasen" mean?', options: ['Excuse me / Sorry', 'Hello', 'Good morning', 'Yes'], answer: 0, explanation: '"Sumimasen" is used for "Excuse me" or "Sorry".' },
+
+      // ITALIAN
+      { id: 'q12', lang: 'it', question: 'What is the common greeting for "Hello / Goodbye" in Italian?', options: ['Grazie', 'Ciao', 'Prego', 'Scusi'], answer: 1, explanation: '"Ciao" is used informally for both Hi and Bye.' },
+      { id: 'q13', lang: 'it', question: 'How do you say "The bill, please" in Italian?', options: ['Il conto, per favore', 'Buongiorno', 'Grazie mille', 'Per favore'], answer: 0, explanation: '"Il conto, per favore" translates to "The bill, please".' },
+
+      // MANDARIN
+      { id: 'q14', lang: 'zh', question: 'How do you say "Hello" in Mandarin?', options: ['Xièxie (谢谢)', 'Nǐ hǎo (你好)', 'Zàijiàn (再见)', 'Bú kèqi (不客气)'], answer: 1, explanation: '"Nǐ hǎo (你好)" is the standard greeting for "Hello".' },
+      { id: 'q15', lang: 'zh', question: 'What does "Xièxie" mean?', options: ['Sorry', 'Thank you', 'Goodbye', 'Good morning'], answer: 1, explanation: '"Xièxie" translates to "Thank you".' }
+    ];
+
+    const GRAMMAR = [
+      // SPANISH
+      {
+        id: 'g1', lang: 'es', title: 'Present Tense Regular Verbs (-AR, -ER, -IR)', level: 'Beginner',
+        summary: 'Conjugate action verbs in Spanish based on person pronouns.',
+        rules: [
+          { title: '-AR Verbs (Hablar - to speak)', details: 'Drop -ar and add endings: yo -o, tú -as, él/ella -a, nosotros -amos, ellos -an.', example: 'Yo hablo español con mis amigos.' },
+          { title: '-ER & -IR Verbs (Comer & Vivir)', details: 'Drop ending and apply: yo -o, tú -es, él -e, nosotros -emos/-imos, ellos -en.', example: 'Nosotros comemos paella y vivimos en Madrid.' },
+          { title: 'Ser vs Estar (To Be)', details: 'Use "Ser" for permanent identity/traits, "Estar" for temporary states & locations.', example: 'Yo soy estudiante y hoy estoy muy feliz.' }
+        ]
+      },
+      {
+        id: 'g2', lang: 'es', title: 'Gender of Nouns & Articles (El, La, Los, Las)', level: 'Beginner',
+        summary: 'Understand masculine and feminine nouns in Spanish.',
+        rules: [
+          { title: 'Masculine vs Feminine Endings', details: 'Nouns ending in -o are usually masculine (el libro), ending in -a are feminine (la casa).', example: 'El chico lee el libro en la casa.' },
+          { title: 'Plural Agreement', details: 'Add -s or -es to articles and nouns to match quantity.', example: 'Los chicos leen las cartas.' }
+        ]
+      },
+
+      // FRENCH
+      {
+        id: 'g3', lang: 'fr', title: 'Definite & Indefinite Articles (Le, La, Un, Une)', level: 'Beginner',
+        summary: 'Master French noun genders and foundational articles.',
+        rules: [
+          { title: 'Masculine vs Feminine Articles', details: 'Use "Le / Un" for masculine nouns and "La / Une" for feminine nouns.', example: 'Un café, une salade, et la note s’il vous plaît.' },
+          { title: 'Elision with Vowels (L’)', details: 'Drop the vowel in "le" or "la" before a noun starting with a vowel or silent h.', example: 'L’eau est très fraîche et l’hôtel est grand.' }
+        ]
+      },
+
+      // GERMAN
+      {
+        id: 'g4', lang: 'de', title: 'German Genders & Nominative Articles (Der, Die, Das)', level: 'Beginner',
+        summary: 'German has three grammatical genders for all nouns.',
+        rules: [
+          { title: 'Three Genders', details: 'Der (masculine), Die (feminine), Das (neuter).', example: 'Der Mann, die Frau, und das Kind trinken Wasser.' },
+          { title: 'Noun Capitalization', details: 'ALL nouns in German must be capitalized regardless of position in a sentence.', example: 'Ich kaufe das Buch in Deutschland.' }
+        ]
+      },
+
+      // JAPANESE
+      {
+        id: 'g5', lang: 'ja', title: 'Essential Japanese Sentence Structure & Particles', level: 'Beginner',
+        summary: 'SOV (Subject-Object-Verb) word order and core particles.',
+        rules: [
+          { title: 'Topic Particle は (wa)', details: 'Marks the topic of the sentence.', example: 'わたしは学生です (Watashi wa gakusei desu - I am a student).' },
+          { title: 'Object Particle を (o)', details: 'Marks the direct object of the verb.', example: '水をおねがいします (Mizu o onegaishimasu - Water please).' }
+        ]
+      },
+
+      // ITALIAN
+      {
+        id: 'g6', lang: 'it', title: 'Italian Noun Endings & Plurals', level: 'Beginner',
+        summary: 'How singular nouns change to plural in Italian.',
+        rules: [
+          { title: 'Singular to Plural Rules', details: '-o becomes -i (il libro -> i libri), -a becomes -e (la ragazza -> le ragazze).', example: 'Un gelato delizioso e due gelati grandi.' }
+        ]
+      },
+
+      // MANDARIN
+      {
+        id: 'g7', lang: 'zh', title: 'Basic Sentence Structure & Tones', level: 'Beginner',
+        summary: 'SVO structure and no verb conjugation in Mandarin.',
+        rules: [
+          { title: 'No Verb Conjugation', details: 'Verbs never change form for tense or person in Chinese!', example: '我喝水 (I drink water), 他喝水 (He drinks water).' },
+          { title: 'Question Particle 吗 (ma)', details: 'Add 吗 at the end of a statement to turn it into a yes/no question.', example: '你好吗？ (Nǐ hǎo ma? - How are you?)' }
+        ]
+      }
+    ];
+
+    const BADGES = [
+      { id: 'b1', title: 'First Step', desc: 'Complete your first lesson', icon: 'fa-sparkles', unlocked: true },
+      { id: 'b2', title: 'Vocab Master', desc: 'Master 10+ cards', icon: 'fa-brain', unlocked: true },
+      { id: 'b3', title: 'On Fire!', desc: '3-day streak active', icon: 'fa-fire', unlocked: true },
+      { id: 'b4', title: 'Quiz Whiz', desc: 'Score 100% on a quiz', icon: 'fa-trophy', unlocked: false },
+      { id: 'b5', title: 'Polyglot Mind', desc: 'Study 2+ languages', icon: 'fa-globe', unlocked: false },
+      { id: 'b6', title: 'AI Companion', desc: 'Chat with AI Tutor', icon: 'fa-robot', unlocked: true }
+    ];
+
+    let state = {
+      currentTab: 'dashboard',
+      user: {
+        name: 'Alex Learner',
+        avatar: '🚀',
+        targetLang: 'es',
+        dailyGoalMinutes: 10,
+        todayMinutesSpent: 0,
+        streak: 3,
+        xp: 240,
+        masteredWords: 18
+      },
+      timer: { running: true, accumulatedMs: 0, lastTick: Date.now() },
+      flashcards: { currentIndex: 0, isFlipped: false, selectedTopic: 'All' },
+      quiz: { currentIndex: 0, score: 0, selectedAnswer: null, completed: false },
+      chat: [{ sender: 'ai', text: '¡Hola! I am your LingoPulse AI Tutor. Ask me any question about vocabulary, grammar, or ordering food in Spanish!' }],
+      customCards: [],
+      customQuizzes: [],
+      customGrammar: []
+    };
+
+    function initTimerEngine() {
+      state.timer.lastTick = Date.now();
+      setInterval(() => {
+        const now = Date.now();
+        const delta = now - state.timer.lastTick;
+        state.timer.lastTick = now;
+        if (state.timer.running && document.visibilityState === 'visible') {
+          if (delta > 0 && delta < 3000) state.timer.accumulatedMs += delta;
+          if (state.timer.accumulatedMs >= 60000) {
+            const addedMins = Math.floor(state.timer.accumulatedMs / 60000);
+            state.timer.accumulatedMs = state.timer.accumulatedMs % 60000;
+            state.user.todayMinutesSpent += addedMins;
+            saveState();
+          }
+        } else {
+          state.timer.lastTick = Date.now();
+        }
+        updateTimerUI();
+      }, 500);
+    }
+
+    function toggleTimer() {
+      state.timer.running = !state.timer.running;
+      state.timer.lastTick = Date.now();
+      updateTimerUI();
+    }
+
+    function resetTimerAndProgress() {
+      state.user.todayMinutesSpent = 0;
+      state.timer.accumulatedMs = 0;
+      state.timer.lastTick = Date.now();
+      saveState();
+      updateTimerUI();
+      renderAllViews();
+    }
+
+    function updateTimerUI() {
+      const currentSecs = Math.floor(state.timer.accumulatedMs / 1000);
+      const formattedSecs = currentSecs < 10 ? '0' + currentSecs : currentSecs;
+      const spent = state.user.todayMinutesSpent;
+      const target = state.user.dailyGoalMinutes;
+
+      document.getElementById('header-timer-sec').textContent = formattedSecs;
+      document.getElementById('modal-timer-seconds').textContent = formattedSecs;
+      document.getElementById('modal-timer-spent').textContent = spent;
+      document.getElementById('modal-timer-target').textContent = target;
+
+      const toggleBtn = document.getElementById('modal-timer-toggle-btn');
+      const dot = document.getElementById('timer-dot');
+      const ping = document.getElementById('timer-ping-dot');
+
+      if (state.timer.running) {
+        toggleBtn.textContent = 'Pause Timer';
+        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-cyan-500';
+        ping.style.display = 'inline-flex';
+      } else {
+        toggleBtn.textContent = 'Resume Timer';
+        dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-amber-500';
+        ping.style.display = 'none';
+      }
+    }
+
+    function switchTab(tabId) {
+      state.currentTab = tabId;
+      document.querySelectorAll('#view-dashboard, #view-flashcards, #view-quizzes, #view-grammar, #view-chat').forEach(v => v.classList.add('hidden'));
+      const activeView = document.getElementById(`view-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => btn.classList.remove('active'));
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      const activeMobNav = document.getElementById(`mobile-nav-${tabId}`);
+      if (activeNav) activeNav.classList.add('active');
+      if (activeMobNav) activeMobNav.classList.add('active');
+
+      renderAllViews();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleLangDropdown() {
+      const dd = document.getElementById('lang-dropdown');
+      dd.classList.toggle('hidden');
+    }
+
+    function selectLanguage(langId) {
+      state.user.targetLang = langId;
+      state.flashcards.currentIndex = 0;
+      state.flashcards.isFlipped = false;
+      state.quiz.currentIndex = 0;
+      state.quiz.selectedAnswer = null;
+      state.quiz.completed = false;
+      saveState();
+      document.getElementById('lang-dropdown').classList.add('hidden');
+      renderAllViews();
+    }
+
+    function getFilteredFlashcards() {
+      return FLASHCARDS.filter(c => {
+        const matchesLang = c.lang === state.user.targetLang;
+        const matchesTopic = state.flashcards.selectedTopic === 'All' || c.topic === state.flashcards.selectedTopic;
+        return matchesLang && matchesTopic;
+      });
+    }
+
+    function getFilteredQuizzes() {
+      return QUIZZES.filter(q => q.lang === state.user.targetLang);
+    }
+
+    function flipFlashcard() {
+      state.flashcards.isFlipped = !state.flashcards.isFlipped;
+      renderFlashcardView();
+    }
+
+    function prevFlashcard() {
+      const cards = getFilteredFlashcards();
+      if (cards.length === 0) return;
+      state.flashcards.currentIndex = (state.flashcards.currentIndex - 1 + cards.length) % cards.length;
+      state.flashcards.isFlipped = false;
+      renderFlashcardView();
+    }
+
+    function nextFlashcard() {
+      const cards = getFilteredFlashcards();
+      if (cards.length === 0) return;
+      state.flashcards.currentIndex = (state.flashcards.currentIndex + 1) % cards.length;
+      state.flashcards.isFlipped = false;
+      renderFlashcardView();
+    }
+
+    function rateFlashcard(remembered) {
+      if (remembered) {
+        state.user.xp += 10;
+        state.user.masteredWords += 1;
+        saveState();
+      }
+      nextFlashcard();
+    }
+
+    let speechDebounceTimer = null;
+    let lastSpeakTimestamp = 0;
+    window.currentActiveUtterance = null;
+
+    function speakText(text, langId, event) {
+      if (event) {
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+      }
+      if (!text) return;
+
+      const now = Date.now();
+      if (now - lastSpeakTimestamp < 300) {
+        return;
+      }
+      lastSpeakTimestamp = now;
+
+      if (speechDebounceTimer) {
+        clearTimeout(speechDebounceTimer);
+        speechDebounceTimer = null;
+      }
+
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch(e) {}
+
+        speechDebounceTimer = setTimeout(() => {
+          try {
+            window.speechSynthesis.cancel();
+          } catch(e) {}
+
+          const targetLang = langId || state.user.targetLang;
+          const langObj = LANGUAGES.find(l => l.id === targetLang) || LANGUAGES[0];
+          
+          const cleanText = text.replace(/[*_#`~]/g, '').trim();
+          if (!cleanText) return;
+
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = langObj.speechCode || 'es-ES';
+          utterance.rate = 0.9;
+          
+          window.currentActiveUtterance = utterance;
+
+          utterance.onend = function() {
+            window.currentActiveUtterance = null;
+          };
+          utterance.onerror = function() {
+            window.currentActiveUtterance = null;
+          };
+
+          window.speechSynthesis.speak(utterance);
+        }, 80);
+      }
+    }
+
+    function resetUserProgressStats() {
+      if (confirm("Are you sure you want to reset your Day Streak, total XP, Mastered Words, and Today's Study Time to 0?")) {
+        state.user.streak = 0;
+        state.user.xp = 0;
+        state.user.masteredWords = 0;
+        state.user.todayMinutesSpent = 0;
+        state.timer.accumulatedMs = 0;
+        saveState();
+        renderAllViews();
+        closeProfileModal();
+      }
+    }
+
+    function speakCurrentWord(event) {
+      if (event) {
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+      }
+      const cards = getFilteredFlashcards();
+      const card = cards[state.flashcards.currentIndex];
+      if (!card) return;
+      speakText(card.word, card.lang, event);
+    }
+
+    function playQuizAudio(event) {
+      if (event) {
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+      }
+      const quizList = getFilteredQuizzes();
+      const q = quizList[state.quiz.currentIndex];
+      if (!q) return;
+      speakText(q.question, q.lang, event);
+    }
+
+    function selectQuizAnswer(index) {
+      state.quiz.selectedAnswer = index;
+      const quizList = getFilteredQuizzes();
+      const q = quizList[state.quiz.currentIndex];
+      if (index === q.answer) {
+        state.quiz.score += 1;
+        state.user.xp += 20;
+        saveState();
+      }
+      renderQuizzesView();
+    }
+
+    function nextQuizQuestion() {
+      const quizList = getFilteredQuizzes();
+      state.quiz.selectedAnswer = null;
+      if (state.quiz.currentIndex + 1 < quizList.length) {
+        state.quiz.currentIndex += 1;
+      } else {
+        state.quiz.completed = true;
+      }
+      renderQuizzesView();
+    }
+
+    function restartQuiz() {
+      state.quiz.currentIndex = 0;
+      state.quiz.score = 0;
+      state.quiz.selectedAnswer = null;
+      state.quiz.completed = false;
+      renderQuizzesView();
+    }
+
+    function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+      state.chat.push({ sender: 'user', text: msg });
+      input.value = '';
+      renderChatView();
+
+      setTimeout(() => {
+        let reply = "That's a great question! In " + (LANGUAGES.find(l=>l.id===state.user.targetLang)?.name || 'Spanish') + ", practicing conversational phrases daily is key. Try asking me for example dialogues or sentence structures!";
+        if (msg.toLowerCase().includes('coffee')) {
+          reply = "To order coffee in Spanish: 'Un café, por favor' (A coffee, please) or 'Quisiera un café con leche' (I would like a coffee with milk).";
+        } else if (msg.toLowerCase().includes('ser') || msg.toLowerCase().includes('estar')) {
+          reply = "'Ser' is used for permanent traits, origin, and identity ('Yo soy de España'). 'Estar' is used for emotions, health, and temporary locations ('Yo estoy feliz').";
+        }
+        state.chat.push({ sender: 'ai', text: reply });
+        saveState();
+        renderChatView();
+      }, 700);
+    }
+
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chat-input').value = promptText;
+      const form = document.querySelector('#view-chat form');
+      if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+
+    function clearChat() {
+      state.chat = [{ sender: 'ai', text: 'Chat cleared! Ask me anything about grammar or vocabulary.' }];
+      renderChatView();
+    }
+
+    function openProfileModal() {
+      document.getElementById('modal-user-name-input').value = state.user.name;
+      document.getElementById('modal-goal-range').value = state.user.dailyGoalMinutes;
+      document.getElementById('modal-goal-val').textContent = state.user.dailyGoalMinutes + ' mins';
+      document.getElementById('profile-modal').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profile-modal').classList.add('hidden');
+    }
+
+    function updateModalGoalLabel(val) {
+      document.getElementById('modal-goal-val').textContent = val + ' mins';
+    }
+
+    function selectAvatar(emoji) {
+      state.user.avatar = emoji;
+    }
+
+    function saveProfileModal() {
+      const name = document.getElementById('modal-user-name-input').value.trim();
+      const goal = parseInt(document.getElementById('modal-goal-range').value);
+      if (name) state.user.name = name;
+      if (!isNaN(goal)) state.user.dailyGoalMinutes = goal;
+      saveState();
+      closeProfileModal();
+      renderAllViews();
+    }
+
+    function openTimerModal() {
+      document.getElementById('timer-modal').classList.remove('hidden');
+    }
+
+    function closeTimerModal() {
+      document.getElementById('timer-modal').classList.add('hidden');
+    }
+
+    // MODAL CREATION HANDLERS
+    function openAddFlashcardModal() {
+      document.getElementById('fc-add-lang').value = state.user.targetLang;
+      document.getElementById('add-flashcard-modal').classList.remove('hidden');
+    }
+    function closeAddFlashcardModal() {
+      document.getElementById('add-flashcard-modal').classList.add('hidden');
+    }
+    function saveNewFlashcard() {
+      const lang = document.getElementById('fc-add-lang').value;
+      const topic = document.getElementById('fc-add-topic').value.trim() || 'Custom';
+      const word = document.getElementById('fc-add-word').value.trim();
+      const phonetic = document.getElementById('fc-add-phonetic').value.trim() || word;
+      const translation = document.getElementById('fc-add-translation').value.trim();
+      const example = document.getElementById('fc-add-example').value.trim() || word;
+      const exampleTranslation = document.getElementById('fc-add-example-trans').value.trim() || translation;
+
+      if (!word || !translation) {
+        alert('Please enter both the word/phrase and translation.');
+        return;
+      }
+
+      const newCard = {
+        id: 'custom-fc-' + Date.now(),
+        lang, topic, word, phonetic, translation, example, exampleTranslation
+      };
+
+      FLASHCARDS.push(newCard);
+      if (!state.customCards) state.customCards = [];
+      state.customCards.push(newCard);
+      saveState();
+
+      closeAddFlashcardModal();
+      document.getElementById('fc-add-word').value = '';
+      document.getElementById('fc-add-translation').value = '';
+      document.getElementById('fc-add-example').value = '';
+      document.getElementById('fc-add-example-trans').value = '';
+
+      state.flashcards.selectedTopic = 'All';
+      state.flashcards.currentIndex = getFilteredFlashcards().length - 1;
+      state.flashcards.isFlipped = false;
+      renderFlashcardView();
+    }
+
+    function openAddQuizModal() {
+      document.getElementById('q-add-lang').value = state.user.targetLang;
+      document.getElementById('add-quiz-modal').classList.remove('hidden');
+    }
+    function closeAddQuizModal() {
+      document.getElementById('add-quiz-modal').classList.add('hidden');
+    }
+    function saveNewQuiz() {
+      const lang = document.getElementById('q-add-lang').value;
+      const question = document.getElementById('q-add-question').value.trim();
+      const opt0 = document.getElementById('q-add-opt-0').value.trim();
+      const opt1 = document.getElementById('q-add-opt-1').value.trim();
+      const opt2 = document.getElementById('q-add-opt-2').value.trim();
+      const opt3 = document.getElementById('q-add-opt-3').value.trim();
+      const answer = parseInt(document.getElementById('q-add-answer').value);
+      const explanation = document.getElementById('q-add-explanation').value.trim() || 'Great effort!';
+
+      if (!question || !opt0 || !opt1) {
+        alert('Please enter a question and at least two options.');
+        return;
+      }
+
+      const options = [opt0, opt1];
+      if (opt2) options.push(opt2);
+      if (opt3) options.push(opt3);
+
+      const newQuiz = {
+        id: 'custom-q-' + Date.now(),
+        lang, question, options, answer: Math.min(answer, options.length - 1), explanation
+      };
+
+      QUIZZES.push(newQuiz);
+      if (!state.customQuizzes) state.customQuizzes = [];
+      state.customQuizzes.push(newQuiz);
+      saveState();
+
+      closeAddQuizModal();
+      document.getElementById('q-add-question').value = '';
+      document.getElementById('q-add-opt-0').value = '';
+      document.getElementById('q-add-opt-1').value = '';
+      document.getElementById('q-add-opt-2').value = '';
+      document.getElementById('q-add-opt-3').value = '';
+
+      state.quiz.currentIndex = getFilteredQuizzes().length - 1;
+      state.quiz.selectedAnswer = null;
+      state.quiz.completed = false;
+      renderQuizzesView();
+    }
+
+    function openAddGrammarModal() {
+      document.getElementById('g-add-lang').value = state.user.targetLang;
+      document.getElementById('add-grammar-modal').classList.remove('hidden');
+    }
+    function closeAddGrammarModal() {
+      document.getElementById('add-grammar-modal').classList.add('hidden');
+    }
+    function saveNewGrammar() {
+      const lang = document.getElementById('g-add-lang').value;
+      const level = document.getElementById('g-add-level').value;
+      const title = document.getElementById('g-add-title').value.trim();
+      const summary = document.getElementById('g-add-summary').value.trim();
+      const ruleTitle = document.getElementById('g-add-rule-title').value.trim();
+      const ruleDetails = document.getElementById('g-add-rule-details').value.trim();
+      const ruleExample = document.getElementById('g-add-rule-example').value.trim();
+
+      if (!title || !summary || !ruleTitle) {
+        alert('Please enter title, summary, and rule title.');
+        return;
+      }
+
+      const newGrammar = {
+        id: 'custom-g-' + Date.now(),
+        lang, title, level, summary,
+        rules: [
+          {
+            title: ruleTitle,
+            details: ruleDetails || 'Grammar rule guidelines.',
+            example: ruleExample || title
+          }
+        ]
+      };
+
+      GRAMMAR.push(newGrammar);
+      if (!state.customGrammar) state.customGrammar = [];
+      state.customGrammar.push(newGrammar);
+      saveState();
+
+      closeAddGrammarModal();
+      document.getElementById('g-add-title').value = '';
+      document.getElementById('g-add-summary').value = '';
+      document.getElementById('g-add-rule-title').value = '';
+      document.getElementById('g-add-rule-details').value = '';
+      document.getElementById('g-add-rule-example').value = '';
+
+      renderGrammarView();
+    }
+
+    // =========================================================
+    // AI GENERATION FUNCTIONS (FLASHCARDS, QUIZZES, GRAMMAR)
+    // =========================================================
+
+    // --- AI FLASHCARD MODAL & AUTO-FILL ---
+    function openAIFlashcardModal() {
+      document.getElementById('ai-fc-lang').value = state.user.targetLang;
+      document.getElementById('ai-flashcard-modal').classList.remove('hidden');
+    }
+
+    function closeAIFlashcardModal() {
+      document.getElementById('ai-flashcard-modal').classList.add('hidden');
+      document.getElementById('ai-fc-status').classList.add('hidden');
+    }
+
+    function setAIFcTopic(topic) {
+      document.getElementById('ai-fc-topic-input').value = topic;
+    }
+
+    async function runAIFlashcardGenerator() {
+      const lang = document.getElementById('ai-fc-lang').value;
+      const count = parseInt(document.getElementById('ai-fc-count').value) || 3;
+      const topic = document.getElementById('ai-fc-topic-input').value.trim() || 'Everyday Vocabulary';
+      const statusEl = document.getElementById('ai-fc-status');
+
+      statusEl.classList.remove('hidden');
+
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+
+      try {
+        const res = await fetch('/api/ai-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate-flashcards',
+            language: langObj.name,
+            topic: topic,
+            count: count,
+            level: 'beginner'
+          })
+        });
+
+        const data = await res.json();
+        let newCards = [];
+
+        if (data.success && data.data && Array.isArray(data.data)) {
+          newCards = data.data;
+        } else if (data.success && Array.isArray(data.data?.cards)) {
+          newCards = data.data.cards;
+        }
+
+        if (!newCards || newCards.length === 0) {
+          // Smart fallback array if API returns alternative format
+          newCards = generateFallbackFlashcards(lang, topic, count);
+        }
+
+        newCards.forEach((c, idx) => {
+          const formattedCard = {
+            id: 'ai-fc-' + Date.now() + '-' + idx,
+            lang: lang,
+            topic: c.topic || c.category || topic,
+            word: c.word || c.native || 'Palabra',
+            phonetic: c.phonetic || c.word || 'pah-LAH-brah',
+            translation: c.translation || c.english || 'Word',
+            example: c.example || (c.word + ' es útil.'),
+            exampleTranslation: c.exampleTranslation || c.example_translation || ('This is useful.')
+          };
+          FLASHCARDS.push(formattedCard);
+          if (!state.customCards) state.customCards = [];
+          state.customCards.push(formattedCard);
+        });
+
+        saveState();
+        closeAIFlashcardModal();
+
+        state.flashcards.selectedTopic = 'All';
+        state.flashcards.currentIndex = getFilteredFlashcards().length - 1;
+        state.flashcards.isFlipped = false;
+        renderFlashcardView();
+
+      } catch (err) {
+        console.warn('AI API offline or error, generating offline cards:', err);
+        const fallbackCards = generateFallbackFlashcards(lang, topic, count);
+        fallbackCards.forEach((c, idx) => {
+          const card = {
+            id: 'ai-fc-fallback-' + Date.now() + '-' + idx,
+            lang: lang,
+            topic: topic,
+            word: c.word,
+            phonetic: c.phonetic,
+            translation: c.translation,
+            example: c.example,
+            exampleTranslation: c.exampleTranslation
+          };
+          FLASHCARDS.push(card);
+          if (!state.customCards) state.customCards = [];
+          state.customCards.push(card);
+        });
+
+        saveState();
+        closeAIFlashcardModal();
+
+        state.flashcards.selectedTopic = 'All';
+        state.flashcards.currentIndex = getFilteredFlashcards().length - 1;
+        state.flashcards.isFlipped = false;
+        renderFlashcardView();
+      }
+    }
+
+    async function autoFillFlashcardAI() {
+      const promptText = document.getElementById('fc-ai-prompt').value.trim();
+      const lang = document.getElementById('fc-add-lang').value;
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+
+      if (!promptText) {
+        alert('Please enter a topic or word in the AI Quick Auto-Fill field.');
+        return;
+      }
+
+      const btn = event.target;
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auto-filling...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/ai-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate-single-flashcard',
+            language: langObj.name,
+            topic: promptText,
+            prompt: promptText
+          })
+        });
+
+        const data = await res.json();
+        let fc = data.data;
+
+        if (fc) {
+          document.getElementById('fc-add-topic').value = fc.topic || promptText;
+          document.getElementById('fc-add-word').value = fc.word || promptText;
+          document.getElementById('fc-add-phonetic').value = fc.phonetic || fc.word || promptText;
+          document.getElementById('fc-add-translation').value = fc.translation || promptText;
+          document.getElementById('fc-add-example').value = fc.example || fc.word;
+          document.getElementById('fc-add-example-trans').value = fc.exampleTranslation || fc.translation;
+        } else {
+          fillManualFlashcardFallback(lang, promptText);
+        }
+      } catch (e) {
+        fillManualFlashcardFallback(lang, promptText);
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function fillManualFlashcardFallback(lang, prompt) {
+      document.getElementById('fc-add-topic').value = prompt;
+      document.getElementById('fc-add-word').value = prompt;
+      document.getElementById('fc-add-phonetic').value = prompt.toLowerCase();
+      document.getElementById('fc-add-translation').value = prompt + ' (Translation)';
+      document.getElementById('fc-add-example').value = prompt + ' es muy importante.';
+      document.getElementById('fc-add-example-trans').value = prompt + ' is very important.';
+    }
+
+    function generateFallbackFlashcards(lang, topic, count) {
+      const templates = {
+        es: [
+          { word: 'El billete', phonetic: 'ehl bee-YEH-teh', translation: 'The ticket', example: 'Tengo un billete de tren.', exampleTranslation: 'I have a train ticket.' },
+          { word: 'La maleta', phonetic: 'lah mah-LEH-tah', translation: 'The suitcase', example: 'Mi maleta es azul.', exampleTranslation: 'My suitcase is blue.' },
+          { word: 'El restaurante', phonetic: 'ehl rehs-tauh-RAHN-teh', translation: 'The restaurant', example: 'Comemos en un buen restaurante.', exampleTranslation: 'We eat at a good restaurant.' },
+          { word: 'La cuenta, por favor', phonetic: 'lah KWEHN-tah', translation: 'The bill, please', example: '¿Nos trae la cuenta, por favor?', exampleTranslation: 'Could you bring us the bill, please?' },
+          { word: 'El pasaporte', phonetic: 'ehl pah-sah-POR-teh', translation: 'The passport', example: 'Aquí está mi pasaporte.', exampleTranslation: 'Here is my passport.' }
+        ],
+        fr: [
+          { word: 'Le billet', phonetic: 'luh bee-YAY', translation: 'The ticket', example: 'Voici mon billet.', exampleTranslation: 'Here is my ticket.' },
+          { word: 'La valise', phonetic: 'lah vah-LEEZ', translation: 'The suitcase', example: 'Ma valise est lourde.', exampleTranslation: 'My suitcase is heavy.' },
+          { word: 'L\'addition, s\'il vous plaît', phonetic: 'lah-dee-SYOHN', translation: 'The check, please', example: 'Je voudrais l\'addition.', exampleTranslation: 'I would like the check.' }
+        ]
+      };
+      const list = templates[lang] || templates.es;
+      return list.slice(0, count);
+    }
+
+
+    // --- AI QUIZ MODAL & AUTO-FILL ---
+    function openAIQuizModal() {
+      document.getElementById('ai-q-lang').value = state.user.targetLang;
+      document.getElementById('ai-quiz-modal').classList.remove('hidden');
+    }
+
+    function closeAIQuizModal() {
+      document.getElementById('ai-quiz-modal').classList.add('hidden');
+      document.getElementById('ai-q-status').classList.add('hidden');
+    }
+
+    function setAIQTopic(topic) {
+      document.getElementById('ai-q-topic-input').value = topic;
+    }
+
+    async function runAIQuizGenerator() {
+      const lang = document.getElementById('ai-q-lang').value;
+      const level = document.getElementById('ai-q-level').value;
+      const topic = document.getElementById('ai-q-topic-input').value.trim() || 'General Vocabulary';
+      const statusEl = document.getElementById('ai-q-status');
+
+      statusEl.classList.remove('hidden');
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+
+      try {
+        const res = await fetch('/api/ai-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate-quiz',
+            language: langObj.name,
+            topic: topic,
+            level: level
+          })
+        });
+
+        const data = await res.json();
+        let qData = data.data;
+
+        if (qData && qData.question && Array.isArray(qData.options)) {
+          const newQuiz = {
+            id: 'ai-q-' + Date.now(),
+            lang: lang,
+            question: qData.question,
+            options: qData.options,
+            answer: typeof qData.answer === 'number' ? qData.answer : 0,
+            explanation: qData.explanation || 'Great job!'
+          };
+
+          QUIZZES.push(newQuiz);
+          if (!state.customQuizzes) state.customQuizzes = [];
+          state.customQuizzes.push(newQuiz);
+
+          saveState();
+          closeAIQuizModal();
+
+          state.quiz.currentIndex = getFilteredQuizzes().length - 1;
+          state.quiz.selectedAnswer = null;
+          state.quiz.completed = false;
+          renderQuizzesView();
+        } else {
+          fallbackAIQuiz(lang, topic);
+        }
+      } catch (err) {
+        console.warn('AI Quiz Generation fallback used:', err);
+        fallbackAIQuiz(lang, topic);
+      }
+    }
+
+    function fallbackAIQuiz(lang, topic) {
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+      const newQuiz = {
+        id: 'ai-q-fallback-' + Date.now(),
+        lang: lang,
+        question: `How do you express "${topic}" correctly in ${langObj.name}?`,
+        options: [
+          `Opción correcta de ${topic}`,
+          `Frase incorrecta A`,
+          `Frase incorrecta B`,
+          `Frase incorrecta C`
+        ],
+        answer: 0,
+        explanation: `In ${langObj.name}, option 1 uses the natural phrase for ${topic}.`
+      };
+
+      QUIZZES.push(newQuiz);
+      if (!state.customQuizzes) state.customQuizzes = [];
+      state.customQuizzes.push(newQuiz);
+
+      saveState();
+      closeAIQuizModal();
+
+      state.quiz.currentIndex = getFilteredQuizzes().length - 1;
+      state.quiz.selectedAnswer = null;
+      state.quiz.completed = false;
+      renderQuizzesView();
+    }
+
+    async function autoFillQuizAI() {
+      const promptText = document.getElementById('q-ai-prompt').value.trim();
+      const lang = document.getElementById('q-add-lang').value;
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+
+      if (!promptText) {
+        alert('Please enter a question topic or concept for AI auto-fill.');
+        return;
+      }
+
+      const btn = event.target;
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auto-filling...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/ai-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate-quiz',
+            language: langObj.name,
+            topic: promptText,
+            level: 'beginner'
+          })
+        });
+
+        const data = await res.json();
+        let qData = data.data;
+
+        if (qData && qData.question && Array.isArray(qData.options)) {
+          document.getElementById('q-add-question').value = qData.question;
+          document.getElementById('q-add-opt-0').value = qData.options[0] || 'Option A';
+          document.getElementById('q-add-opt-1').value = qData.options[1] || 'Option B';
+          document.getElementById('q-add-opt-2').value = qData.options[2] || 'Option C';
+          document.getElementById('q-add-opt-3').value = qData.options[3] || 'Option D';
+          document.getElementById('q-add-answer').value = qData.answer !== undefined ? qData.answer : 0;
+          document.getElementById('q-add-explanation').value = qData.explanation || 'Correct choice!';
+        } else {
+          fillManualQuizFallback(promptText);
+        }
+      } catch (e) {
+        fillManualQuizFallback(promptText);
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function fillManualQuizFallback(promptText) {
+      document.getElementById('q-add-question').value = `What is the best translation for "${promptText}"?`;
+      document.getElementById('q-add-opt-0').value = `Correct phrase for ${promptText}`;
+      document.getElementById('q-add-opt-1').value = `Incorrect phrase 1`;
+      document.getElementById('q-add-opt-2').value = `Incorrect phrase 2`;
+      document.getElementById('q-add-opt-3').value = `Incorrect phrase 3`;
+      document.getElementById('q-add-answer').value = 0;
+      document.getElementById('q-add-explanation').value = `Option A is the accurate expression for "${promptText}".`;
+    }
+
+
+    // --- AI GRAMMAR MODAL & AUTO-FILL ---
+    function openAIGrammarModal() {
+      document.getElementById('ai-g-lang').value = state.user.targetLang;
+      document.getElementById('ai-grammar-modal').classList.remove('hidden');
+    }
+
+    function closeAIGrammarModal() {
+      document.getElementById('ai-grammar-modal').classList.add('hidden');
+      document.getElementById('ai-g-status').classList.add('hidden');
+    }
+
+    function setAIGTopic(topic) {
+      document.getElementById('ai-g-topic-input').value = topic;
+    }
+
+    async function runAIGrammarGenerator() {
+      const lang = document.getElementById('ai-g-lang').value;
+      const level = document.getElementById('ai-g-level').value;
+      const topic = document.getElementById('ai-g-topic-input').value.trim() || 'Grammar Concept';
+      const statusEl = document.getElementById('ai-g-status');
+
+      statusEl.classList.remove('hidden');
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+
+      try {
+        const res = await fetch('/api/ai-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate-grammar',
+            language: langObj.name,
+            topic: topic,
+            level: level
+          })
+        });
+
+        const data = await res.json();
+        let gData = data.data;
+
+        if (gData && (gData.title || gData.ruleTitle)) {
+          const newGrammar = {
+            id: 'ai-g-' + Date.now(),
+            lang: lang,
+            title: gData.title || topic,
+            level: gData.level || level,
+            summary: gData.summary || ('Mastering ' + topic + ' in ' + langObj.name + '.'),
+            rules: [
+              {
+                title: gData.ruleTitle || ('Key Rule: ' + topic),
+                details: gData.ruleDetails || 'Follow standard word order and verb agreement.',
+                example: gData.example || 'Ejemplo de práctica.'
+              }
+            ]
+          };
+
+          GRAMMAR.push(newGrammar);
+          if (!state.customGrammar) state.customGrammar = [];
+          state.customGrammar.push(newGrammar);
+
+          saveState();
+          closeAIGrammarModal();
+          renderGrammarView();
+        } else {
+          fallbackAIGrammar(lang, topic, level);
+        }
+      } catch (err) {
+        console.warn('AI Grammar generation fallback used:', err);
+        fallbackAIGrammar(lang, topic, level);
+      }
+    }
+
+    function fallbackAIGrammar(lang, topic, level) {
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+      const newGrammar = {
+        id: 'ai-g-fallback-' + Date.now(),
+        lang: lang,
+        title: topic,
+        level: level,
+        summary: `Essential grammar rule for ${topic} in ${langObj.name}.`,
+        rules: [
+          {
+            title: `Understanding ${topic}`,
+            details: `In ${langObj.name}, ensure correct word alignment and conjugations when using ${topic}.`,
+            example: `Ejemplo de ${topic}.`
+          }
+        ]
+      };
+
+      GRAMMAR.push(newGrammar);
+      if (!state.customGrammar) state.customGrammar = [];
+      state.customGrammar.push(newGrammar);
+
+      saveState();
+      closeAIGrammarModal();
+      renderGrammarView();
+    }
+
+    async function autoFillGrammarAI() {
+      const promptText = document.getElementById('g-ai-prompt').value.trim();
+      const lang = document.getElementById('g-add-lang').value;
+      const level = document.getElementById('g-add-level').value;
+      const langObj = LANGUAGES.find(l => l.id === lang) || LANGUAGES[0];
+
+      if (!promptText) {
+        alert('Please enter a grammar topic for AI auto-fill.');
+        return;
+      }
+
+      const btn = event.target;
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auto-filling...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/ai-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'generate-grammar',
+            language: langObj.name,
+            topic: promptText,
+            level: level
+          })
+        });
+
+        const data = await res.json();
+        let gData = data.data;
+
+        if (gData) {
+          document.getElementById('g-add-title').value = gData.title || promptText;
+          document.getElementById('g-add-summary').value = gData.summary || ('Overview of ' + promptText);
+          document.getElementById('g-add-rule-title').value = gData.ruleTitle || ('Core rule for ' + promptText);
+          document.getElementById('g-add-rule-details').value = gData.ruleDetails || 'Rule explanation.';
+          document.getElementById('g-add-rule-example').value = gData.example || (promptText + ' example');
+        } else {
+          fillManualGrammarFallback(promptText);
+        }
+      } catch (e) {
+        fillManualGrammarFallback(promptText);
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function fillManualGrammarFallback(promptText) {
+      document.getElementById('g-add-title').value = promptText;
+      document.getElementById('g-add-summary').value = `Key guidelines for mastering ${promptText}.`;
+      document.getElementById('g-add-rule-title').value = `Rule 1: ${promptText} Usage`;
+      document.getElementById('g-add-rule-details').value = `Pay close attention to sentence structure and modifier agreement.`;
+      document.getElementById('g-add-rule-example').value = `Ejemplo de ${promptText}.`;
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('lingopulse_state', JSON.stringify(state));
+      } catch(e) {}
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem('lingopulse_state');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state.user = { ...state.user, ...parsed.user };
+          state.customCards = parsed.customCards || [];
+          state.customQuizzes = parsed.customQuizzes || [];
+          state.customGrammar = parsed.customGrammar || [];
+
+          state.customCards.forEach(card => {
+            if (!FLASHCARDS.some(c => c.id === card.id)) FLASHCARDS.push(card);
+          });
+          state.customQuizzes.forEach(q => {
+            if (!QUIZZES.some(item => item.id === q.id)) QUIZZES.push(q);
+          });
+          state.customGrammar.forEach(g => {
+            if (!GRAMMAR.some(item => item.id === g.id)) GRAMMAR.push(g);
+          });
+        }
+      } catch(e) {}
+    }
+
+    function renderHeader() {
+      const curLang = LANGUAGES.find(l => l.id === state.user.targetLang) || LANGUAGES[0];
+      document.getElementById('current-lang-flag').textContent = curLang.flag;
+      document.getElementById('current-lang-name').textContent = curLang.name;
+      document.getElementById('user-avatar-badge').textContent = state.user.avatar;
+      document.getElementById('header-user-name').textContent = state.user.name;
+
+      const dd = document.getElementById('lang-dropdown');
+      dd.innerHTML = LANGUAGES.map(l => `
+        <button onclick="selectLanguage('${l.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-800 text-xs font-semibold flex items-center gap-3 transition-all ${l.id === state.user.targetLang ? 'text-cyan-400 bg-slate-800/50' : 'text-slate-300'}">
+          <span class="text-base">${l.flag}</span>
+          <span>${l.name}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderDashboardView() {
+      const curLang = LANGUAGES.find(l => l.id === state.user.targetLang) || LANGUAGES[0];
+      document.getElementById('dash-user-name').textContent = state.user.name;
+      document.getElementById('dash-target-lang').textContent = curLang.name;
+      document.getElementById('dash-spent-mins').textContent = state.user.todayMinutesSpent;
+      document.getElementById('dash-goal-mins').textContent = state.user.dailyGoalMinutes;
+      document.getElementById('dash-xp-count').textContent = state.user.xp;
+      document.getElementById('dash-mastered-count').textContent = state.user.masteredWords;
+      document.getElementById('dash-streak-count').textContent = `${state.user.streak} Days`;
+
+      const pct = Math.min(100, Math.round((state.user.todayMinutesSpent / state.user.dailyGoalMinutes) * 100));
+      document.getElementById('dash-goal-bar').style.width = `${pct}%`;
+
+      const langCards = FLASHCARDS.filter(c => c.lang === state.user.targetLang);
+      const featuredCard = langCards[0] || FLASHCARDS[0];
+      const featContainer = document.getElementById('dash-featured-container');
+      if (featContainer && featuredCard) {
+        featContainer.innerHTML = `
+          <div class="bg-gradient-to-r from-cyan-950/40 via-slate-900 to-indigo-950/40 border border-cyan-500/30 p-6 rounded-3xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                <i class="fa-solid fa-star text-[9px]"></i>
+                <span>Daily Vocabulary & Example Audio</span>
+              </span>
+              <button onclick="speakText(\`${featuredCard.word.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${featuredCard.lang}', event)" class="p-2 rounded-xl bg-slate-800 text-cyan-400 hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs font-semibold">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>Listen Word</span>
+              </button>
+            </div>
+            <div class="flex items-baseline gap-3">
+              <h3 class="text-2xl font-black text-white">${featuredCard.word}</h3>
+              <span class="text-xs text-slate-400 font-mono">/ ${featuredCard.phonetic} /</span>
+              <span class="text-sm font-semibold text-cyan-300">— ${featuredCard.translation}</span>
+            </div>
+            <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+              <div class="space-y-0.5">
+                <div class="text-slate-200 font-medium">"${featuredCard.example}"</div>
+                <div class="text-slate-400 text-[11px]">${featuredCard.exampleTranslation}</div>
+              </div>
+              <button onclick="speakText(\`${featuredCard.example.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${featuredCard.lang}', event)" class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all shrink-0 flex items-center gap-1.5 text-xs font-bold" title="Listen to Example Sentence">
+                <i class="fa-solid fa-volume-high text-xs"></i>
+                <span>Listen Example</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      const badgesContainer = document.getElementById('badges-container');
+      badgesContainer.innerHTML = BADGES.map(b => `
+        <div class="bg-slate-950/60 border ${b.unlocked ? 'border-amber-500/30' : 'border-slate-800 opacity-50'} p-3 rounded-2xl flex flex-col items-center text-center space-y-1">
+          <div class="w-8 h-8 rounded-xl ${b.unlocked ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-500'} flex items-center justify-center text-xs">
+            <i class="fa-solid ${b.icon}"></i>
+          </div>
+          <span class="text-xs font-bold text-white">${b.title}</span>
+          <span class="text-[10px] text-slate-400 line-clamp-1">${b.desc}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderFlashcardView() {
+      const cards = getFilteredFlashcards();
+      const currentCard = cards[state.flashcards.currentIndex];
+
+      const langCards = FLASHCARDS.filter(c => c.lang === state.user.targetLang);
+      const availableTopics = ['All', ...new Set(langCards.map(c => c.topic))];
+
+      document.getElementById('flashcard-topics-bar').innerHTML = availableTopics.map(t => `
+        <button onclick="state.flashcards.selectedTopic='${t}'; state.flashcards.currentIndex=0; state.flashcards.isFlipped=false; renderFlashcardView();" class="px-3 py-1 rounded-xl text-xs font-bold transition-all ${state.flashcards.selectedTopic === t ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}">
+          ${t}
+        </button>
+      `).join('');
+
+      const renderArea = document.getElementById('flashcard-render-area');
+      if (!currentCard) {
+        renderArea.innerHTML = `
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
+            <i class="fa-solid fa-inbox text-4xl text-slate-600"></i>
+            <h3 class="text-lg font-bold text-white">No flashcards found</h3>
+            <p class="text-xs text-slate-400">Try changing topic filter or target language.</p>
+          </div>
+        `;
+        return;
+      }
+
+      renderArea.innerHTML = `
+        <div class="max-w-xl mx-auto space-y-6">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Card ${state.flashcards.currentIndex + 1} of ${cards.length}</span>
+            <span class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-cyan-400 font-semibold">${currentCard.topic}</span>
+          </div>
+
+          <div onclick="flipFlashcard()" class="relative h-80 w-full cursor-pointer perspective-1000">
+            <div class="w-full h-full duration-500 transform-style-3d ${state.flashcards.isFlipped ? 'flipped' : ''}">
+              <div class="absolute inset-0 backface-hidden bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-800 hover:border-cyan-500/50 rounded-3xl p-8 flex flex-col justify-between shadow-xl transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Target Phrase</span>
+                  <button onclick="speakCurrentWord(event)" class="p-2 rounded-xl bg-slate-800 text-cyan-400 hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs font-semibold" title="Listen to word">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                    <span>Word</span>
+                  </button>
+                </div>
+                <div class="text-center space-y-2">
+                  <div class="text-3xl font-extrabold text-white tracking-tight">${currentCard.word}</div>
+                  <div class="text-xs font-medium text-slate-400 font-mono">/ ${currentCard.phonetic} /</div>
+                </div>
+                <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 text-xs text-slate-300">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="space-y-0.5 text-left flex-1">
+                      <div class="text-[10px] font-bold uppercase text-cyan-400">Example Sentence</div>
+                      <div class="text-slate-200 font-medium">"${currentCard.example}"</div>
+                    </div>
+                    <button onclick="speakText(\`${currentCard.example.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${currentCard.lang}', event);" class="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all shrink-0 flex items-center gap-1.5 text-xs font-bold" title="Listen to example sentence">
+                      <i class="fa-solid fa-volume-high text-xs"></i>
+                      <span>Audio</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="text-center text-[11px] text-slate-500">Tap card to reveal translation</div>
+              </div>
+
+              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-3xl p-8 flex flex-col justify-between shadow-xl">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">English Translation</span>
+                  <button onclick="speakCurrentWord(event)" class="p-2 rounded-xl bg-slate-800 text-indigo-400 hover:bg-slate-700 transition-all flex items-center gap-1.5 text-xs font-semibold" title="Listen to word">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                    <span>Word</span>
+                  </button>
+                </div>
+                <div class="text-center space-y-2">
+                  <div class="text-2xl font-extrabold text-white">${currentCard.translation}</div>
+                </div>
+                <div class="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 text-xs text-slate-300">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="space-y-1 text-left flex-1">
+                      <div class="text-[10px] font-bold uppercase text-indigo-400">Example & Translation</div>
+                      <div class="text-slate-200 font-medium">"${currentCard.example}"</div>
+                      <div class="text-slate-400 text-[11px]">${currentCard.exampleTranslation}</div>
+                    </div>
+                    <button onclick="speakText(\`${currentCard.example.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${currentCard.lang}', event);" class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all shrink-0 flex items-center gap-1.5 text-xs font-bold" title="Listen to example sentence">
+                      <i class="fa-solid fa-volume-high text-xs"></i>
+                      <span>Audio</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="text-center text-[11px] text-slate-500">Tap card to flip back</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button onclick="prevFlashcard()" class="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+
+            <button onclick="rateFlashcard(false)" class="flex-1 py-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 text-xs font-bold transition-all">
+              Need Review
+            </button>
+
+            <button onclick="rateFlashcard(true)" class="flex-1 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold transition-all">
+              Mastered (+10 XP)
+            </button>
+
+            <button onclick="nextFlashcard()" class="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderQuizzesView() {
+      const quizList = getFilteredQuizzes();
+      const renderArea = document.getElementById('quiz-render-area');
+
+      if (quizList.length === 0) {
+        renderArea.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-400 text-sm">No quizzes available for this language yet.</div>`;
+        return;
+      }
+
+      if (state.quiz.completed) {
+        renderArea.innerHTML = `
+          <div class="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6">
+            <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl mx-auto">
+              <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-2xl font-black text-white">Quiz Completed!</h3>
+              <p class="text-xs text-slate-400">You scored ${state.quiz.score} out of ${quizList.length}</p>
+            </div>
+            <button onclick="restartQuiz()" class="px-6 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20">
+              Retake Quiz
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const q = quizList[state.quiz.currentIndex];
+      renderArea.innerHTML = `
+        <div class="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Question ${state.quiz.currentIndex + 1} of ${quizList.length}</span>
+            <span class="font-bold text-cyan-400">Score: ${state.quiz.score}</span>
+          </div>
+
+          <div class="space-y-2">
+            <h3 class="text-lg font-bold text-white flex items-start gap-3">
+              <span class="flex-1">${q.question}</span>
+              <button onclick="playQuizAudio(event)" class="p-2 rounded-xl bg-slate-800 text-cyan-400 hover:bg-slate-700 transition-all shrink-0" title="Listen to question">
+                <i class="fa-solid fa-volume-high text-xs"></i>
+              </button>
+            </h3>
+          </div>
+
+          <div class="space-y-3">
+            ${q.options.map((opt, i) => {
+              let cls = "w-full text-left p-4 rounded-2xl border text-xs font-semibold transition-all flex items-center justify-between ";
+              if (state.quiz.selectedAnswer === null) {
+                cls += "bg-slate-950 border-slate-800 text-slate-200 hover:border-cyan-500/50";
+              } else if (i === q.answer) {
+                cls += "bg-emerald-500/10 border-emerald-500/50 text-emerald-300";
+              } else if (i === state.quiz.selectedAnswer) {
+                cls += "bg-rose-500/10 border-rose-500/50 text-rose-300";
+              } else {
+                cls += "bg-slate-950/40 border-slate-800/40 text-slate-500";
+              }
+              return `
+                <div class="${cls}">
+                  <button onclick="if(state.quiz.selectedAnswer===null) selectQuizAnswer(${i})" class="flex-1 text-left py-1">
+                    <span>${opt}</span>
+                  </button>
+                  <div class="flex items-center gap-2">
+                    <button onclick="speakText(\`${opt.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${q.lang}', event);" class="p-1.5 rounded-lg bg-slate-800 text-cyan-400 hover:bg-slate-700 transition-all shrink-0" title="Listen to option">
+                      <i class="fa-solid fa-volume-high text-[10px]"></i>
+                    </button>
+                    ${state.quiz.selectedAnswer !== null && i === q.answer ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          ${state.quiz.selectedAnswer !== null ? `
+            <div class="bg-indigo-950/40 border border-indigo-500/30 p-4 rounded-2xl text-xs text-indigo-200 space-y-2 animate-fade-in">
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-indigo-400">Explanation</div>
+                <button onclick="speakText(\`${q.explanation.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${q.lang}', event);" class="p-1.5 rounded-xl bg-slate-800 text-indigo-300 hover:bg-slate-700 transition-all shrink-0" title="Listen to explanation">
+                  <i class="fa-solid fa-volume-high text-xs"></i>
+                </button>
+              </div>
+              <div>${q.explanation}</div>
+            </div>
+
+            <button onclick="nextQuizQuestion()" class="w-full py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20">
+              Continue
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderGrammarView() {
+      const filtered = GRAMMAR.filter(g => g.lang === state.user.targetLang);
+      const renderArea = document.getElementById('grammar-render-area');
+
+      if (filtered.length === 0) {
+        renderArea.innerHTML = `<div class="col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-400 text-sm">Grammar lessons coming soon for this language!</div>`;
+        return;
+      }
+
+      renderArea.innerHTML = filtered.map(g => `
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 uppercase">${g.level}</span>
+            <button onclick="speakText(\`${g.title.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${g.lang}', event)" class="p-1.5 rounded-xl bg-slate-800 text-purple-300 hover:bg-slate-700 transition-all" title="Listen to lesson title">
+              <i class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+          </div>
+          <h3 class="text-base font-bold text-white">${g.title}</h3>
+          <p class="text-xs text-slate-400">${g.summary}</p>
+          <div class="space-y-3 pt-2">
+            ${g.rules.map(r => `
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="text-xs font-bold text-cyan-300">${r.title}</div>
+                  <button onclick="speakText(\`${r.title.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${g.lang}', event)" class="p-1.5 rounded-lg bg-slate-800 text-cyan-400 hover:bg-slate-700 transition-all" title="Listen to rule title">
+                    <i class="fa-solid fa-volume-high text-[10px]"></i>
+                  </button>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">${r.details}</p>
+                <div class="flex items-center justify-between gap-2 pt-1">
+                  <div class="text-[11px] font-mono text-indigo-300 bg-indigo-950/50 px-3 py-1.5 rounded-xl border border-indigo-900/50 flex-1">${r.example}</div>
+                  <button onclick="speakText(\`${r.example.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${g.lang}', event)" class="p-2 rounded-xl bg-slate-800 text-cyan-400 hover:bg-slate-700 transition-all shrink-0" title="Listen to rule example sentence">
+                    <i class="fa-solid fa-volume-high text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderChatView() {
+      const box = document.getElementById('chat-messages-box');
+      box.innerHTML = state.chat.map(m => `
+        <div class="flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in">
+          ${m.sender === 'ai' ? `
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+          ` : ''}
+          <div class="max-w-md p-4 rounded-2xl text-xs leading-relaxed ${m.sender === 'user' ? 'bg-cyan-500 text-slate-950 font-medium rounded-tr-none' : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-tl-none'}">
+            <div class="flex items-start justify-between gap-2">
+              <span class="flex-1">${m.text}</span>
+              <button onclick="speakText(\`${m.text.replace(/`/g, '\\`').replace(/'/g, "\\'").replace(/\n/g, " ")}\`, '${state.user.targetLang}', event);" class="p-1.5 rounded-lg ${m.sender === 'user' ? 'bg-cyan-600 text-slate-950 hover:bg-cyan-700' : 'bg-slate-800 text-cyan-400 hover:bg-slate-700'} transition-all shrink-0" title="Listen to text audio">
+                <i class="fa-solid fa-volume-high text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function renderAllViews() {
+      renderHeader();
+      renderDashboardView();
+      renderFlashcardView();
+      renderQuizzesView();
+      renderGrammarView();
+      renderChatView();
+    }
+
+    // BOOTSTRAP APP
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      initTimerEngine();
+      renderAllViews();
+    });
+  </script>
+</body>
+</html>
